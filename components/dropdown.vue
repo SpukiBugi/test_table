@@ -17,7 +17,7 @@
           v-for="option in options"
           :key="option"
           class="drop-option"
-          @click="active_option = option, drop_open = false, $emit('drop_change')"
+          @click="active_option = option, drop_open = false, $emit('drop_change', active_option)"
         >
           {{ option }}
         </div>
@@ -71,11 +71,10 @@ export default {
 <style lang="scss" scoped>
 .drop {
   position: relative;
-  // width: 191px;
-  height: 32px;
-  padding: 6px 13px 7px 10px;
-  border-radius: 3px;
-  color: #22242B;
+  padding: 3px 13px;
+  border: 1px solid #D5DAE0;
+  border-radius: $BRDR_RAD;
+  color: $CLR_GRAY;
   background-color: white;
   z-index: 2;
   cursor: pointer;
@@ -97,11 +96,12 @@ export default {
 
 .drop-angle {
   display: flex;
-  margin-left: 21px;
+  margin-left: 7px;
   flex-shrink: 0;
 
   /deep/ svg {
-    width: 10px;
+    width: 8px;
+    fill: $CLR_GRAY;
   }
 }
 
@@ -109,8 +109,8 @@ export default {
   position: absolute;
   top: 43px;
   right: 0;
-  padding: 15px 0;
-  width: 300px;
+  width: 100%;
+  padding: 3px 0;
   border: 1px solid #D3D6DE;
   box-sizing: border-box;
   box-shadow: 0px 0px 20px rgba(34, 36, 43, 0.15);
@@ -118,7 +118,7 @@ export default {
   background-color: white;
 
   .drop-option {
-    padding: 7px 15px;
+    padding: 6px 15px;
     cursor: pointer;
     transition: all .3s ease;
     white-space: nowrap;

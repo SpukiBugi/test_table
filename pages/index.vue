@@ -1,46 +1,61 @@
 <template>
-  <main class="content-wrapper">
-    <h2 class="main-title">Table UI</h2>
+  <div class="page-wrapper">
+    <main class="content-wrapper">
+      <h2 class="main-title">Table UI</h2>
 
-    <div class="control-panel">
-      <div class="sort-by">
-        <h3 class="panel-title">Sorting by:</h3>
+      <div class="control-panel">
+        <div class="sort-by">
+          <h3 class="panel-title">Sorting by:</h3>
+          <button
+            v-for="button in show_columns"
+            :key="button.title"
+            class="sort-button"
+            :class="{'active': button.title === active_sort}"
+            @click="changeSort(button)"
+          >
+            {{button.title}}
+          </button>
+        </div>
+
         <button
-          v-for="button in $options.sort_buttons"
-          :key="button"
-          class="sort-button"
-          :class="{'active': button === active_sort}"
-          @click="changeSort(button)"
+          class="control-delete"
+          :class="{'active': selected_products.length}"
+          @click="deleteProd"
         >
-          {{button}}
+          Delete
+          <span class="delete-length">({{selected_products.length}})</span>
         </button>
+
+        <Dropdown 
+          :options="$options.perpage_options" 
+          @drop_change="changePerpage"
+        />
+
+        <div class="control-page">
+          <button class="page-switch" v-html="$options.Svg.common_angle"></button>
+          <h3>{{`${(page - 1) * per_page + 1} - ${Math.min(page * per_page, products.length)}`}} <span class="page-span">of</span> {{products.length}}</h3>
+          <button class="page-switch forward" v-html="$options.Svg.common_angle"></button>
+        </div>
+
+        <Multidrop 
+          :options="$options.all_columns" 
+          @drop_change="changeColumns" 
+        />
       </div>
 
-      <button class="control-delete">Delete</button>
-
-      <Dropdown :options="$options.perpage_options" />
-
-      <div class="control-page">
-        <button class="page-switch" v-html="$options.Svg.common_angle"></button>
-        <div>{{`${(page - 1) * per_page + 1} - ${Math.min(page * per_page, products.length)}`}} of {{products.length}}</div>
-        <button class="page-switch forward" v-html="$options.Svg.common_angle"></button>
-      </div>
-
-      <Dropdown :options="$options.columns_options" />
-    </div>
-
-    <Table v-if="loaded" />
+      <Table v-if="loaded" @delete_prod="deleteProd" />
+    </main>
 
     <Dialog v-if="error">
       <div class="error-box">
         <p class="error-message">Произошла ошибка</p>
         <button 
           class="error-button"
-          @click="reloadPage"
+          @click="err_callback(); error = false"
         >Попробовать снова</button>
       </div>
     </Dialog>
-  </main>
+  </div>
 </template>
 
 <script>
@@ -56,6 +71,14 @@ import { getProducts, deleteProducts } from  "@/assets/api/request.js";
 import Svg from "@/assets/js/svg.js";
 
 export default {
+  head () {
+    return {
+      script: [
+        { src: 'simple-scrollbar.js' }
+      ],
+    }
+  },
+
   components: {
     Dropdown,
     Multidrop,
@@ -65,18 +88,44 @@ export default {
 
   Svg,
 
-  sort_buttons: ["Product (100g serving)", "Calories", "Fat (g)", "Carbs (g)", "Protein (g)", "Iron (%)"],
-
   perpage_options: ["10 Per Page", "15 Per Page", "20 Per Page"],
 
-  columns_options: ["Select all", "Product (100g serving)", "Calories", "Fat (g)", "Carbs (g)", "Protein (g)", "Iron (%)"],
+  all_columns: [
+    {
+      title: "Product (100g serving)",
+      field: "product"
+    },
+    {
+      title: "Calories",
+      field: "calories"
+    },
+    {
+      title: "Fat (g)",
+      field: "fat"
+    },
+    {
+      title: "Carbs (g)",
+      field: "carbs"
+    },
+    {
+      title: "Protein (g)",
+      field: "protein"
+    },
+    {
+      title: "Iron (%)",
+      field: "iron"
+    },
+  ],
 
   data() {
     return {
       /** Флаг загрузки данных для таблицы */
       loaded: false,
       error: false,
+      /** Функция обработки ошибки */
+      err_callback: null,
       
+      /** Колонка сортировки */
       active_sort: "Product (100g serving)",
     }
   },
@@ -86,6 +135,8 @@ export default {
       products: (state) => state.products,
       page: (state) => state.page,
       per_page: (state) => state.per_page,
+      show_columns: (state) => state.show_columns,
+      selected_products: (state) => state.selected_products,
     }),
   },
 
@@ -95,7 +146,11 @@ export default {
 
   methods: {
     ...mapMutations([
-      'loadProducts',
+      "loadProducts",
+      "mutatePerPage",
+      "mutateSortBy",
+      "mutateColumns",
+      "deleteStoreProduct",
     ]),
 
     reloadPage() {
@@ -112,12 +167,46 @@ export default {
         this.loaded = true;
       })
       .catch(error => {
-        this.error = true;
+        this.error = "getting_data";
+        this.err_callback = this.reloadPage;
       })
     },
 
     changeSort(sort) {
-      this.active_sort = sort;
+      this.active_sort = sort.title;
+      this.mutateSortBy(sort.field);
+    },
+
+    changePerpage(option) {
+      this.mutatePerPage(parseInt(option, 10));
+    },
+
+    changeColumns(columns) {
+      this.mutateColumns(columns);
+    },
+
+    /** Удаление продуктов
+     * @param ids - необязательный аргумент с массивом id, 
+     * при отсутствии берутся данные из стора
+     */
+    async deleteProd(ids) {
+      let delete_ids;
+
+      if (ids) {
+        delete_ids = ids;
+      } else {
+        delete_ids = this.selected_products;
+      }
+
+      await deleteProducts()
+      .then(response => {
+        this.error = false;
+        this.deleteStoreProduct(delete_ids);
+      })
+      .catch(error => {
+        this.error = "deleting_data";
+        this.err_callback = () => {this.deleteProd(delete_ids)};
+      })
     },
   }
 }
@@ -142,21 +231,28 @@ export default {
 .control-panel {
   display: flex;
   align-items: center;
+  margin-bottom: 15px;
   color: $CLR_DARK_2;
+}
 
-  > * :not(:last-child) {
-    margin-right: 8px;
-  }
+.panel-title {
+  padding-bottom: 2px;
 }
 
 .sort-by {
   display: flex;
   align-items: center;
   margin-right: auto;
+
+  > :first-child {
+    margin-right: 8px;
+  }
 }
 
 .sort-button {
-  padding: 3px 8px 5px;
+  padding: 3px 5px 5px 8px;
+  transition: all .3s ease;
+  color: $CLR_DARK_2;
 
   &.active {
     background-color: $CLR_PRIMARY;
@@ -167,12 +263,34 @@ export default {
 .control-delete {
   padding: 3px 16px 5px;
   margin-right: 12px;
+  border: 1px solid #C6CBD4;
+  opacity: 0.3;
+  pointer-events: none;
+
+  &.active {
+    background-color: $CLR_PRIMARY;
+    color: white;
+    opacity: 1;
+    pointer-events: all;
+
+    .delete-length {
+      display: inline;
+    }
+  }
+}
+
+.delete-length {
+  display: none;
 }
 
 .control-page {
   display: flex;
   align-items: center;
-  margin-right: 16px;
+  margin: 0 16px;
+
+  > *:not(:last-child) {
+    margin-right: 8px;
+  }
 }
 
 /deep/.page-switch {
@@ -196,5 +314,9 @@ export default {
       transform: rotate(-90deg);
     }
   }
+}
+
+.page-span {
+  font-weight: normal;
 }
 </style>
