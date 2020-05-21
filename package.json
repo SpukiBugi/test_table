@@ -8,14 +8,19 @@
     "dev": "nuxt",
     "build": "nuxt build",
     "start": "nuxt start",
-    "generate": "nuxt generate"
+    "generate": "nuxt generate",
+    "build:gh-pages": "cross-env DEPLOY_ENV=GH_PAGES nuxt build",
+    "gen_gh": "cross-env DEPLOY_ENV=GH_PAGES nuxt generate",
+    "deploy": "push-dir --dir=dist --branch=gh-pages --cleanup"
   },
   "dependencies": {
     "nuxt": "^2.0.0"
   },
   "devDependencies": {
     "@nuxtjs/style-resources": "^1.0.0",
+    "cross-env": "^7.0.2",
     "node-sass": "^4.14.1",
+    "push-dir": "^0.4.1",
     "sass-loader": "^8.0.2"
   }
 }
