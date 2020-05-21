@@ -8,6 +8,10 @@ export default {
     state.page = Math.min(Math.max(state.page + direction, 1), total_pages);
   },
 
+  mutatePage: (state, page) => {
+    state.page = page;
+  },
+
   mutatePerPage: (state, per_page) => {
     state.per_page = per_page;
   },

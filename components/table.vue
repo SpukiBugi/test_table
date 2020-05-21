@@ -311,7 +311,7 @@ export default {
     align-items: center;
     width: auto;
     min-width: 80px;
-    flex-grow: 1;
+    margin-left: auto;
     color: $CLR_GRAY;
   }
 

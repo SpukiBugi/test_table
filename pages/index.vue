@@ -62,7 +62,7 @@
         />
       </div>
 
-      <Table v-if="loaded" @delete_prod="deleteOne" :key="page + per_page + products.length" />
+      <Table v-if="loaded" @delete_prod="deleteOne" :key="sort_by + page + per_page + products.length" />
     </main>
 
     <Dialog v-if="error">
@@ -158,6 +158,7 @@ export default {
       products: (state) => state.products,
       page: (state) => state.page,
       per_page: (state) => state.per_page,
+      sort_by: (state) => state.sort_by,
       show_columns: (state) => state.show_columns,
       selected_products: (state) => state.selected_products,
     }),
@@ -171,6 +172,7 @@ export default {
     ...mapMutations([
       "loadProducts",
       "switchPage",
+      "mutatePage",
       "mutatePerPage",
       "mutateSortBy",
       "mutateColumns",
@@ -200,6 +202,7 @@ export default {
     changeSort(sort) {
       this.active_sort = sort.title;
       this.mutateSortBy(sort.field);
+      this.mutatePage(1);
     },
 
     changePerpage(option) {
