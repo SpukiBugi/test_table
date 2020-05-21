@@ -24,7 +24,7 @@ h3 {
 .page-wrapper {
   display: flex;
   justify-content: center;
-  padding: 32px 20px 0;
+  padding: 32px 20px;
 }
 
 .page-wrapper {
@@ -45,27 +45,44 @@ h3 {
   }
 }
 
-.tool-title {
-  font-weight: bold;
-  font-size: 34px;
-  white-space: nowrap;
-  text-align: center; 
+.tooltip {
+  right: -47px;
+  color: #282136;
+  transition: opacity .3s ease;
 }
 
-.tool-text {
-  margin-top: 12px;
-  font-size: 18px;
+.tool-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.16);
+  border-radius: 4px;
+  background-color: white;
   white-space: nowrap;
-  text-align: center; 
 }
 
-.mini-icon {
+.tool-buttons {
+  display: flex;
+  margin-top: 8px;
+}
+
+.tool-button {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 24px;
-  height: 24px;
-  margin-right: 10px;
+  padding: 3px 16px 5px;
+  color: white;
+  background-color: $CLR_PRIMARY;
+
+  &:first-child {
+    margin-right: 16px;
+    border: 1px solid #C6CBD4;
+    background-color: white;
+    color: $CLR_GRAY;
+    border-radius: 4px;
+  }
 }
 
 .highlight {

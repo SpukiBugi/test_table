@@ -17,14 +17,31 @@
           </button>
         </div>
 
-        <button
-          class="control-delete"
-          :class="{'active': selected_products.length}"
-          @click="deleteProd"
-        >
-          Delete
-          <span class="delete-length">({{selected_products.length}})</span>
-        </button>
+        <div class="delete-wrap">
+          <button
+            class="control-delete"
+            :class="{'active': selected_products.length}"
+            @click="callSelectedTool()"
+          >
+            Delete
+            <span class="delete-length">({{selected_products.length}})</span>
+          </button>
+            
+          <Tooltip v-show="tool_select" ref="tool_sel">
+            <div class="tool-box">
+              <p>Are you sure you want to <b>delete items</b>?</p>
+              <div class="tool-buttons">
+                <button
+                  class="tool-button tool-cancel"
+                >Cancel</button>
+                <button 
+                  class="tool-button"
+                  @click="deleteSelected(); tool_select = false"
+                >Confirm</button>
+              </div>
+            </div>
+          </Tooltip>
+        </div>
 
         <Dropdown 
           :options="$options.perpage_options" 
@@ -32,9 +49,9 @@
         />
 
         <div class="control-page">
-          <button class="page-switch" v-html="$options.Svg.common_angle"></button>
+          <button class="page-switch" v-html="$options.Svg.common_angle" @click="switchPage(-1)"></button>
           <h3>{{`${(page - 1) * per_page + 1} - ${Math.min(page * per_page, products.length)}`}} <span class="page-span">of</span> {{products.length}}</h3>
-          <button class="page-switch forward" v-html="$options.Svg.common_angle"></button>
+          <button class="page-switch forward" v-html="$options.Svg.common_angle" @click="switchPage(1)"></button>
         </div>
 
         <Multidrop 
@@ -43,7 +60,7 @@
         />
       </div>
 
-      <Table v-if="loaded" @delete_prod="deleteProd" />
+      <Table v-if="loaded" @delete_prod="deleteOne" :key="page + per_page + products.length" />
     </main>
 
     <Dialog v-if="error">
@@ -51,7 +68,7 @@
         <p class="error-message">Произошла ошибка</p>
         <button 
           class="error-button"
-          @click="err_callback(); error = false"
+          @click="tryAgain"
         >Попробовать снова</button>
       </div>
     </Dialog>
@@ -65,6 +82,7 @@ import Dropdown from "@/components/dropdown";
 import Multidrop from "@/components/multidrop";
 import Dialog from "@/components/dialog";
 import Table from "@/components/table";
+import Tooltip from "@/components/Tooltip";
 
 import { getProducts, deleteProducts } from  "@/assets/api/request.js";
 
@@ -83,7 +101,8 @@ export default {
     Dropdown,
     Multidrop,
     Table,
-    Dialog
+    Dialog,
+    Tooltip
   },
 
   Svg,
@@ -124,6 +143,8 @@ export default {
       error: false,
       /** Функция обработки ошибки */
       err_callback: null,
+      /** Вызов окна подтверждения удаления выделенных продуктов */
+      tool_select: false,
       
       /** Колонка сортировки */
       active_sort: "Product (100g serving)",
@@ -144,12 +165,23 @@ export default {
     this.getProductData();
   },
 
+  mounted() {
+    /** Закрытие выпадающего меню по клику вне */
+    document.addEventListener("click", this.closeTool);
+  },
+
+  beforeDestroy() {
+    document.removeEventListener("click", this.closeTool);
+  },
+
   methods: {
     ...mapMutations([
       "loadProducts",
+      "switchPage",
       "mutatePerPage",
       "mutateSortBy",
       "mutateColumns",
+      "clearSelected",
       "deleteStoreProduct",
     ]),
 
@@ -185,27 +217,59 @@ export default {
       this.mutateColumns(columns);
     },
 
-    /** Удаление продуктов
-     * @param ids - необязательный аргумент с массивом id, 
-     * при отсутствии берутся данные из стора
-     */
-    async deleteProd(ids) {
-      let delete_ids;
+    callSelectedTool() {
+      this.tool_select = true;
 
-      if (ids) {
-        delete_ids = ids;
-      } else {
-        delete_ids = this.selected_products;
+      const tooltip = this.$refs.tool_sel.$el;
+
+      let removeSelTool = (event) => {
+        if (
+          !tooltip.contains(event.target) 
+          && !tooltip !== event.target 
+          || event.target.classList.contains("tool-cancel")
+        ) {
+          this.tool_select = false;
+          window.removeEventListener("click", removeSelTool);
+        }
       }
+
+      setTimeout(() => {
+        window.addEventListener("click", removeSelTool);
+      }, 100);
+    },
+
+    tryAgain() {
+      this.err_callback(); 
+      this.error = false;
+    },
+
+    /** Удаление продуктов одного продукта*/
+    async deleteOne(id) {
+
+      await deleteProducts()
+      .then(response => {
+        this.error = false;
+        this.deleteStoreProduct(id);
+      })
+      .catch(error => {
+        this.error = "deleting_data";
+        this.err_callback = () => {this.deleteOne(id)};
+      })
+    },
+
+    /** Удаление выделенных продуктов */
+    async deleteSelected() {
+      const delete_ids = JSON.parse(JSON.stringify(this.selected_products));
 
       await deleteProducts()
       .then(response => {
         this.error = false;
         this.deleteStoreProduct(delete_ids);
+        this.clearSelected();
       })
       .catch(error => {
         this.error = "deleting_data";
-        this.err_callback = () => {this.deleteProd(delete_ids)};
+        this.err_callback = this.deleteSelected;
       })
     },
   }
@@ -258,6 +322,10 @@ export default {
     background-color: $CLR_PRIMARY;
     color: white;
   }
+}
+
+.delete-wrap {
+  position: relative;
 }
 
 .control-delete {
@@ -318,5 +386,15 @@ export default {
 
 .page-span {
   font-weight: normal;
+}
+
+
+.error-button {
+  margin-top: 8px;
+  padding: 3px 16px 5px;
+  border: 1px solid #D5DAE0;
+  border-radius: $BRDR_RAD;
+  background-color: $CLR_PRIMARY;
+  color: white;
 }
 </style>

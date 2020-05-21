@@ -40,9 +40,9 @@
         <div class="table-cell cell-check">
           <div 
             class="common-check"
-            :class="{'active': selected_ids[product.id]}"
+            :class="{'active': select_all}"
             v-html="$options.Svg.check"
-            @click="selectProduct(product.id)"
+            @click="selectProduct($event, product.id)"
           ></div>
         </div>
 
@@ -99,7 +99,7 @@ export default {
   data() {
     return {
       table_data: [],
-      /** Массив, где индексы равны выбранным id, содержащим в себе логическое значение выбранны ли они */
+      /** Массив, где индексы равны выбранным id и содержащим в себе логическое значение выбранны ли они */
       selected_ids: [],
       /** Флаг выбора всех продутов */
       select_all: false,
@@ -160,7 +160,9 @@ export default {
     },
 
     /** Выбор продукта */
-    selectProduct(id) {
+    selectProduct(event, id) {
+      event.currentTarget.classList.toggle("active");
+      
       if (this.selected_ids[id] !== undefined) {
         this.selected_ids[id] = !this.selected_ids[id];
       } else {
@@ -180,8 +182,10 @@ export default {
 
       if (this.select_all) {
         this.table_data.forEach(element => {
-          this.selected_ids[element.id] = true;
-          this.addSelectProduct(element.id);
+          if (!this.selected_ids[element.id]) {
+            this.selected_ids[element.id] = true;
+            this.addSelectProduct(element.id);
+          }
         });
       } else {
         this.table_data.forEach(element => {
@@ -192,14 +196,14 @@ export default {
     },
 
     callTool(e) {
-      let cell_delete = e.currentTarget.parentElement;
+      const cell_delete = e.currentTarget.parentElement;
       if (cell_delete.classList.contains("tool-open")) {
         return;
       }
 
       cell_delete.classList.add("tool-open");
 
-      let tooltip = cell_delete.querySelector(".tooltip");
+      const tooltip = cell_delete.querySelector(".tooltip");
 
       /** Функция удаления тултипа по нажатию вне тултипа или по кнопке отмены в тултипе */
       let removeTool = (event) => {
@@ -220,7 +224,7 @@ export default {
     
     /** Подтверждение удаления продукта */
     confirmDelete(id) {
-      this.$emit("delete_prod", [id]);
+      this.$emit("delete_prod", id);
     },
   }
 }
@@ -342,42 +346,6 @@ export default {
 .tooltip {
   right: -47px;
   opacity: 0;
-  color: #282136;
   pointer-events: none;
-  transition: opacity .3s ease;
-}
-
-.tool-box {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 16px;
-  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.16);
-  border-radius: 4px;
-  background-color: white;
-  white-space: nowrap;
-}
-
-.tool-buttons {
-  display: flex;
-  margin-top: 8px;
-}
-
-.tool-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 3px 16px 5px;
-  color: white;
-  background-color: $CLR_PRIMARY;
-
-  &:first-child {
-    margin-right: 16px;
-    border: 1px solid #C6CBD4;
-    background-color: white;
-    color: $CLR_GRAY;
-    border-radius: 4px;
-  }
 }
 </style>
