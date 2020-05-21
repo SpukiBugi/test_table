@@ -40,7 +40,7 @@
         <div class="table-cell cell-check">
           <div 
             class="common-check"
-            :class="{'active': select_all}"
+            :class="{'active': selected_ids[product.id] || select_all}"
             v-html="$options.Svg.check"
             @click="selectProduct($event, product.id)"
           ></div>
@@ -122,11 +122,16 @@ export default {
     this.prepareData();
   },
 
+  mounted() {
+    this.clearSelected();
+  },
+
   methods: {
     ...mapMutations([
       "mutateDirection",
       "addSelectProduct",
-      "removeSelectProduct"
+      "removeSelectProduct",
+      "clearSelected",
     ]),
 
     /** Подготовка данных таблицы */
