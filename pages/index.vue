@@ -27,20 +27,22 @@
             <span class="delete-length">({{selected_products.length}})</span>
           </button>
             
-          <Tooltip v-show="tool_select" ref="tool_sel">
-            <div class="tool-box">
-              <p>Are you sure you want to <b>delete items</b>?</p>
-              <div class="tool-buttons">
-                <button
-                  class="tool-button tool-cancel"
-                >Cancel</button>
-                <button 
-                  class="tool-button"
-                  @click="deleteSelected(); tool_select = false"
-                >Confirm</button>
+          <transition name="fade">
+            <Tooltip v-show="tool_select" ref="tool_sel">
+              <div class="tool-box">
+                <p>Are you sure you want to <b>delete items</b>?</p>
+                <div class="tool-buttons">
+                  <button
+                    class="tool-button tool-cancel"
+                  >Cancel</button>
+                  <button 
+                    class="tool-button"
+                    @click="deleteSelected(); tool_select = false"
+                  >Confirm</button>
+                </div>
               </div>
-            </div>
-          </Tooltip>
+            </Tooltip>
+          </transition>
         </div>
 
         <Dropdown 
@@ -163,15 +165,6 @@ export default {
 
   created() {
     this.getProductData();
-  },
-
-  mounted() {
-    /** Закрытие выпадающего меню по клику вне */
-    document.addEventListener("click", this.closeTool);
-  },
-
-  beforeDestroy() {
-    document.removeEventListener("click", this.closeTool);
   },
 
   methods: {
