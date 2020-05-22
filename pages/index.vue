@@ -62,7 +62,11 @@
         />
       </div>
 
-      <Table v-if="loaded" @delete_prod="deleteOne" :key="sort_by + page + per_page + products.length" />
+      <Table 
+        v-if="loaded" 
+        @delete_prod="deleteOne" 
+        :key="sort_by + page + per_page + products.length + sort_direction" 
+      />
     </main>
 
     <Dialog v-if="error">
@@ -161,6 +165,7 @@ export default {
       sort_by: (state) => state.sort_by,
       show_columns: (state) => state.show_columns,
       selected_products: (state) => state.selected_products,
+      sort_direction: (state) => state.sort_direction,
     }),
   },
 
