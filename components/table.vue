@@ -132,6 +132,7 @@ export default {
       "addSelectProduct",
       "removeSelectProduct",
       "clearSelected",
+      "mutatePage",
     ]),
 
     /** Подготовка данных таблицы */
@@ -162,6 +163,7 @@ export default {
     /** Смена направления сортировки */
     changeDirection() {
       this.mutateDirection();
+      this.mutatePage(1);
     },
 
     /** Выбор продукта */
