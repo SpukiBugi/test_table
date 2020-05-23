@@ -58,7 +58,7 @@
 
         <Multidrop 
           :options="$options.all_columns" 
-          @drop_change="changeColumns" 
+          @drop_change="mutateColumns" 
         />
       </div>
 
@@ -214,10 +214,6 @@ export default {
       this.mutatePerPage(parseInt(option, 10));
     },
 
-    changeColumns(columns) {
-      this.mutateColumns(columns);
-    },
-
     callSelectedTool() {
       this.tool_select = true;
 
@@ -234,9 +230,10 @@ export default {
         }
       }
 
+      /** Ожидание завершения анимации появления */
       setTimeout(() => {
         window.addEventListener("click", removeSelTool);
-      }, 100);
+      }, 300);
     },
 
     tryAgain() {

@@ -224,9 +224,10 @@ export default {
         }
       }
 
+      /** Ожидание завершения анимации появления */
       setTimeout(() => {
         window.addEventListener("click", removeTool);
-      }, 100);
+      }, 300);
     },
     
     /** Подтверждение удаления продукта */
