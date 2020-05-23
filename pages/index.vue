@@ -37,7 +37,7 @@
                   >Cancel</button>
                   <button 
                     class="tool-button"
-                    @click="deleteSelected(); tool_select = false"
+                    @click="confirmDelete"
                   >Confirm</button>
                 </div>
               </div>
@@ -64,7 +64,7 @@
 
       <Table 
         v-if="loaded" 
-        @delete_prod="deleteOne" 
+        @delete_prod="deleteProd" 
         :key="sort_by + page + per_page + products.length + sort_direction" 
       />
     </main>
@@ -244,8 +244,18 @@ export default {
       this.error = false;
     },
 
-    /** Удаление продуктов одного продукта*/
-    async deleteOne(id) {
+    /** Обработка подтверждения удаления продуктов */
+    confirmDelete() {
+      this.tool_select = false;
+      const delete_ids = JSON.parse(JSON.stringify(this.selected_products));
+
+      this.deleteProd(delete_ids);
+    },
+
+    /** Удаление продуктов
+     * @param id - массив, либо номер id продукта
+     */
+    async deleteProd(id) {
 
       await deleteProducts()
       .then(response => {
@@ -254,23 +264,7 @@ export default {
       })
       .catch(error => {
         this.error = "deleting_data";
-        this.err_callback = () => {this.deleteOne(id)};
-      })
-    },
-
-    /** Удаление выделенных продуктов */
-    async deleteSelected() {
-      const delete_ids = JSON.parse(JSON.stringify(this.selected_products));
-
-      await deleteProducts()
-      .then(response => {
-        this.error = false;
-        this.deleteStoreProduct(delete_ids);
-        this.clearSelected();
-      })
-      .catch(error => {
-        this.error = "deleting_data";
-        this.err_callback = this.deleteSelected;
+        this.err_callback = () => {this.deleteProd(id)};
       })
     },
   }
